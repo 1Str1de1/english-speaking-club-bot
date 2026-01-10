@@ -13,9 +13,11 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("error loading environment variables")
-		return
+	if os.Getenv("RAILWAY_ENVIRONMENT") == "" {
+		if err := godotenv.Load(); err != nil {
+			log.Fatal("error loading environment variables")
+			return
+		}
 	}
 	fmt.Println("Start")
 
