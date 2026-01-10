@@ -1,0 +1,39 @@
+package config
+
+import (
+	"errors"
+	"os"
+	"strconv"
+)
+
+type Config struct {
+	Token        string
+	ChatId       int64
+	ThreadPoolId int
+}
+
+func NewConfig() (*Config, error) {
+	token := os.Getenv("BOT_TOKEN")
+	chatIdStr := os.Getenv("CHAT_ID")
+	threadPoolIdStr := os.Getenv("MESSAGE_THREAD_ID")
+
+	if len(token) == 0 {
+		return nil, errors.New("error getting bot_token")
+	}
+
+	chatId, err := strconv.ParseInt(chatIdStr, 10, 64)
+	if chatId == 0 || err != nil {
+		return nil, errors.New("error getting chat_id")
+	}
+
+	threadPoolId, err := strconv.Atoi(threadPoolIdStr)
+	if chatId == 0 || err != nil {
+		return nil, errors.New("error getting thread_pool_id")
+	}
+
+	return &Config{
+		Token:        token,
+		ChatId:       chatId,
+		ThreadPoolId: threadPoolId,
+	}, nil
+}
