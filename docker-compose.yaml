@@ -1,0 +1,24 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: ./deployment/web/Dockerfile
+    container_name: english_club_bot
+    ports:
+      - "8080:8080"
+    restart: on-failure
+#    depends_on:
+#      db:
+#        condition: service_healthy
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - CHAT_ID=${CHAT_ID}
+    networks:
+      - eng-network
+
+#volumes:
+#  postgres_data:
+
+networks:
+  eng-network:
+    driver: bridge
