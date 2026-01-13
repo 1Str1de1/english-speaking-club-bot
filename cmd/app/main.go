@@ -33,6 +33,13 @@ func main() {
 		log.Fatal("error starting server" + err.Error())
 	}
 
+	//word, err := services.GetWordWithTranslation(os.Getenv("YANDEX_DICT_API_KEY"), "time")
+	//if err != nil {
+	//	fmt.Println("error getting word")
+	//} else {
+	//	fmt.Println(word)
+	//}
+
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
 		os.Interrupt,

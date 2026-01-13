@@ -28,7 +28,7 @@ func NewConfig() (*Config, error) {
 
 	threadPoolId, err := strconv.Atoi(threadPoolIdStr)
 	if chatId == 0 || err != nil {
-		return nil, errors.New("error getting thread_pool_id")
+		return nil, errors.New(" error getting thread_pool_id: " + err.Error())
 	}
 
 	return &Config{

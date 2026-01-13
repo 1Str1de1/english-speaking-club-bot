@@ -2,6 +2,7 @@ package server
 
 import (
 	"english-speaking-club-bot/internal/config"
+	"english-speaking-club-bot/internal/services"
 	"github.com/go-co-op/gocron/v2"
 	"log/slog"
 	"os"
@@ -12,7 +13,7 @@ type Server struct {
 	conf   *config.Config
 	logger *slog.Logger
 	cron   gocron.Scheduler
-	tb     *TelegramService
+	tb     *services.TelegramService
 }
 
 func NewServer(conf *config.Config) *Server {
@@ -26,7 +27,7 @@ func NewServer(conf *config.Config) *Server {
 		panic("error starting cron " + err.Error())
 	}
 
-	tb, err := NewTgService(conf.Token)
+	tb, err := services.NewTgService(conf.Token)
 	if err != nil {
 		panic("error starting tg service" + err.Error())
 	}

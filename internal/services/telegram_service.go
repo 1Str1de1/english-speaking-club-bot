@@ -1,4 +1,4 @@
-package server
+package services
 
 import (
 	tb "github.com/go-telegram-bot-api/telegram-bot-api/v5"
