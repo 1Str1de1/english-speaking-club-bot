@@ -1,19 +1,22 @@
 package services
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
-type WordWithTranslation struct {
-	EngWord       string
-	RuWord        string
-	EngDefinition string
-	RuDefinition  string
+type Vocabulary struct {
+	words    []string
+	byLength map[int][]string
 }
 
 type YandexDictResponse struct {
@@ -26,19 +29,38 @@ type YandexDictResponse struct {
 			PartOfSpeech string `json:"pos"`
 
 			Synonymous []struct {
-				Word         string `json:"text"`
-				PartOfSpeech string `json:"pos"`
+				Word string `json:"text"`
 			} `json:"syn"`
 
 			Meaning []struct {
-				Word         string `json:"text"`
-				PartOfSpeech string `json:"pos"`
+				Word string `json:"text"`
 			} `json:"mean"`
+
+			//Example []struct {
+			//	Word string `json:"text"`
+			//} `json:"ex"`
 		} `json:"tr"`
 	} `json:"def"`
 }
 
-func GetWordWithTranslation(apiKey, word string) (*YandexDictResponse, error) {
+func ExecuteRandomWordCommand(apiKey string) (string, error) {
+	voc, err := LoadVocabulary("common_words.txt")
+	if err != nil {
+		return "", err
+	}
+
+	w := GetRandomWordFromVocabulary(voc)
+	data, err := FetchWordWithTranslation(apiKey, w)
+	if err != nil {
+		return "", err
+	}
+
+	return FormatWordForTelegram(data), nil
+}
+
+// FetchWordWithTranslation A func for getting an exact word from YandexTranslate API.
+// It returns YandexDictResponse struct which next will be converted to Telegram message in another func
+func FetchWordWithTranslation(apiKey, word string) (*YandexDictResponse, error) {
 	url := fmt.Sprintf("https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=%s&lang=en-ru&text=%s", apiKey, word)
 
 	client := &http.Client{
@@ -59,4 +81,144 @@ func GetWordWithTranslation(apiKey, word string) (*YandexDictResponse, error) {
 	}
 
 	return &data, nil
+}
+
+func LoadVocabulary(fileName string) (*Vocabulary, error) {
+	projDir, err := os.Getwd()
+	if err != nil {
+		return nil, errors.New("error getting working dir" + err.Error())
+	}
+
+	filePath := filepath.Join(projDir, "internal", "services", fileName)
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, errors.New("failed to open file with words" + err.Error())
+	}
+
+	words := make([]string, 10000)
+	byLength := make(map[int][]string, 10000)
+
+	vocabulary := Vocabulary{
+		words:    words,
+		byLength: byLength,
+	}
+
+	scanner := bufio.NewScanner(file)
+	for i := 0; scanner.Scan(); {
+		wordLen := len(scanner.Text())
+		vocabulary.words[i] = scanner.Text()
+		byLength[wordLen] = append(byLength[wordLen], words[i])
+		i++
+	}
+
+	return &vocabulary, nil
+}
+
+func GetRandomWordFromVocabulary(voc *Vocabulary) string {
+	return voc.words[rand.Intn(len(voc.words))]
+}
+
+func FormatWordForTelegram(data *YandexDictResponse) string {
+	if len(data.Definition) == 0 {
+		return ""
+	}
+
+	var builder strings.Builder
+
+	word := data.Definition[0]
+	builder.WriteString(fmt.Sprintf("📚 *%s", word.Word))
+
+	if word.PartOfSpeech != "" {
+		builder.WriteString(fmt.Sprintf("\n🔤 %s", word.PartOfSpeech))
+	}
+
+	builder.WriteString("\n\n")
+
+	for i, tr := range word.Tr {
+		builder.WriteString(fmt.Sprintf("🇷🇺 *%d. %s*", i+1, tr.Word))
+
+		if tr.PartOfSpeech != "" && tr.PartOfSpeech != word.PartOfSpeech {
+			builder.WriteString(fmt.Sprintf(" (%s)", translatePartOfSpeech(tr.PartOfSpeech)))
+		}
+
+		if len(tr.Meaning) > 0 {
+			builder.WriteString("\n   📖 _")
+			for j, mean := range tr.Meaning {
+				if j > 0 {
+					builder.WriteString("; ")
+				}
+				builder.WriteString(mean.Word)
+
+				// limit set to three values
+				if j == 2 {
+					builder.WriteString("...")
+					break
+				}
+			}
+		}
+
+		if len(tr.Synonymous) > 0 {
+			builder.WriteString("\n   🔄 ")
+			for j, syn := range tr.Synonymous {
+				if j > 0 {
+					builder.WriteString("; ")
+				}
+				builder.WriteString(syn.Word)
+
+				// limit set to five values
+				if j == 4 {
+					builder.WriteString("...")
+					break
+				}
+			}
+		}
+
+		//if len(tr.Example) > 0 {
+		//
+		//}
+
+		builder.WriteString("\n\n")
+
+		// limit to 3 translations
+		if i >= 3 {
+			builder.WriteString("... и другие переводы\n")
+			break
+		}
+	}
+
+	builder.WriteString(fmt.Sprintf(
+		"🔊 [Аудио произношение](https://dictionary.yandex.net/dicservice?service=pronounce&lang=en&text=%s)",
+		word.Word,
+	))
+
+	return builder.String()
+}
+
+func translatePartOfSpeech(pos string) string {
+	switch pos {
+	case "noun":
+		return "существительное"
+	case "verb":
+		return "глагол"
+	case "adjective":
+		return "прилагательное"
+	case "adverb":
+		return "наречие"
+	case "pronoun":
+		return "местоимение"
+	case "preposition":
+		return "предлог"
+	case "conjunction":
+		return "союз"
+	case "interjection":
+		return "междометие"
+	case "numeral":
+		return "числительное"
+	case "participle":
+		return "причастие"
+	case "gerund":
+		return "герундий"
+	default:
+		return pos
+	}
 }

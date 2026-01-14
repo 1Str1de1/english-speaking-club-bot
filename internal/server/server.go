@@ -4,6 +4,7 @@ import (
 	"english-speaking-club-bot/internal/config"
 	"english-speaking-club-bot/internal/services"
 	"github.com/go-co-op/gocron/v2"
+	tb "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -27,7 +28,7 @@ func NewServer(conf *config.Config) *Server {
 		panic("error starting cron " + err.Error())
 	}
 
-	tb, err := services.NewTgService(conf.Token)
+	tb, err := services.NewTgService(conf.Token, conf.YandApiKey)
 	if err != nil {
 		panic("error starting tg service" + err.Error())
 	}
@@ -66,6 +67,14 @@ func setupLogger() (*slog.Logger, error) {
 func (s *Server) Start() error {
 	s.logger.Info("starting server...")
 
+	updates := s.tb.Bot.GetUpdatesChan(tb.NewUpdate(0))
+
+	go func() {
+		for update := range updates {
+			s.tb.HandleCommand(update)
+		}
+	}()
+
 	_, err := s.cron.NewJob(
 		gocron.CronJob("0 18 * * *", false),
 		gocron.NewTask(func() {
@@ -73,6 +82,7 @@ func (s *Server) Start() error {
 			if err != nil {
 				s.logger.Error("cron or poll error", "err", err)
 			}
+			s.logger.Info("successfully sent a poll")
 		}))
 
 	if err != nil {

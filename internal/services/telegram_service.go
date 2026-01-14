@@ -5,16 +5,18 @@ import (
 )
 
 type TelegramService struct {
-	bot *tb.BotAPI
+	Bot        *tb.BotAPI
+	yandApiKey string
 }
 
-func NewTgService(token string) (*TelegramService, error) {
+func NewTgService(token, yandApiKey string) (*TelegramService, error) {
 	bot, err := tb.NewBotAPI(token)
 	if err != nil {
 		return nil, err
 	}
 	return &TelegramService{
-		bot: bot,
+		Bot:        bot,
+		yandApiKey: yandApiKey,
 	}, nil
 }
 
@@ -35,10 +37,37 @@ func (s *TelegramService) SendHowAreYouPoll(chatId int64) error {
 		AllowsMultipleAnswers: false,
 	}
 
-	_, err := s.bot.Send(poll)
+	_, err := s.Bot.Send(poll)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s *TelegramService) HandleCommand(update tb.Update) {
+	if update.Message == nil || !update.Message.IsCommand() {
+		return
+	}
+
+	switch update.Message.Command() {
+	case "start":
+
+	case "randomword":
+		s.handleRandomWord(update)
+	}
+}
+
+func (s *TelegramService) handleRandomWord(update tb.Update) {
+	word, err := ExecuteRandomWordCommand(s.yandApiKey)
+	if err != nil {
+		msg := tb.NewMessage(update.Message.Chat.ID,
+			"❌ Не могу получить случайное слово")
+		s.Bot.Send(msg)
+		return
+	}
+
+	msg := tb.NewMessage(update.Message.Chat.ID, word)
+	msg.ParseMode = "Markdown"
+	s.Bot.Send(msg)
 }

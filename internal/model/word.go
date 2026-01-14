@@ -1,9 +1,9 @@
 package model
 
 type FullWordInfo struct {
-	EngWord      string
-	RuWord       string
-	RuExamples   []string
-	EngExamples  []string
-	PartOfSpeech string
+	EngWord       string
+	PartOfSpeech  string
+	RuWord        string
+	RuSynonymous  []string
+	EngSynonymous []string
 }
