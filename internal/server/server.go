@@ -92,7 +92,7 @@ func (s *Server) Start() error {
 	s.cron.Start()
 
 	s.logger.Info("server started successfully")
-	return nil
+	return http.ListenAndServe(":"+s.conf.Port, nil)
 }
 
 func (s *Server) Stop() error {
