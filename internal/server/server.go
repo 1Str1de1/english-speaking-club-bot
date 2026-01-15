@@ -4,8 +4,8 @@ import (
 	"english-speaking-club-bot/internal/config"
 	"english-speaking-club-bot/internal/services"
 	"github.com/go-co-op/gocron/v2"
-	tb "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 )
@@ -67,13 +67,13 @@ func setupLogger() (*slog.Logger, error) {
 func (s *Server) Start() error {
 	s.logger.Info("starting server...")
 
-	updates := s.tb.Bot.GetUpdatesChan(tb.NewUpdate(0))
-
-	go func() {
-		for update := range updates {
-			s.tb.HandleCommand(update)
+	http.HandleFunc("tg/webhook", func(w http.ResponseWriter, r *http.Request) {
+		update, err := s.tb.Bot.HandleUpdate(r)
+		if err != nil {
+			s.logger.Error("update error: " + err.Error())
 		}
-	}()
+		s.tb.HandleCommand(update)
+	})
 
 	_, err := s.cron.NewJob(
 		gocron.CronJob("0 18 * * *", false),

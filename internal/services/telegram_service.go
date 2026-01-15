@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	tb "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -14,6 +15,17 @@ func NewTgService(token, yandApiKey string) (*TelegramService, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	wh, err := tb.NewWebhook("english-speacking-club-bot-production.up.railway.app/tg/webhook")
+	if err != nil {
+		return nil, errors.New("error setting webhook " + err.Error())
+	}
+
+	_, err = bot.Request(wh)
+	if err != nil {
+		return nil, errors.New("error requesting webhook " + err.Error())
+	}
+
 	return &TelegramService{
 		Bot:        bot,
 		yandApiKey: yandApiKey,
@@ -45,7 +57,7 @@ func (s *TelegramService) SendHowAreYouPoll(chatId int64) error {
 	return nil
 }
 
-func (s *TelegramService) HandleCommand(update tb.Update) {
+func (s *TelegramService) HandleCommand(update *tb.Update) {
 	if update.Message == nil || !update.Message.IsCommand() {
 		return
 	}
@@ -58,7 +70,7 @@ func (s *TelegramService) HandleCommand(update tb.Update) {
 	}
 }
 
-func (s *TelegramService) handleRandomWord(update tb.Update) {
+func (s *TelegramService) handleRandomWord(update *tb.Update) {
 	word, err := ExecuteRandomWordCommand(s.yandApiKey)
 	if err != nil {
 		msg := tb.NewMessage(update.Message.Chat.ID,
