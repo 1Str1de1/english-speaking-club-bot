@@ -16,7 +16,7 @@ func NewTgService(token, yandApiKey string) (*TelegramService, error) {
 		return nil, err
 	}
 
-	wh, err := tb.NewWebhook("english-speacking-club-bot-production.up.railway.app/tg/webhook")
+	wh, err := tb.NewWebhook("poetic-warmth-production-7bfc.up.railway.app/tg/webhook")
 	if err != nil {
 		return nil, errors.New("error setting webhook " + err.Error())
 	}
