@@ -67,7 +67,7 @@ func setupLogger() (*slog.Logger, error) {
 func (s *Server) Start() error {
 	s.logger.Info("starting server...")
 
-	http.HandleFunc("tg/webhook", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/tg/webhook", func(w http.ResponseWriter, r *http.Request) {
 		update, err := s.tb.Bot.HandleUpdate(r)
 		if err != nil {
 			s.logger.Error("update error: " + err.Error())
