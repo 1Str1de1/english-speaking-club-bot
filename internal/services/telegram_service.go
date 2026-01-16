@@ -88,6 +88,10 @@ func (s *TelegramService) handleRandomWord(update *tb.Update) {
 
 	msg := tb.NewMessage(update.Message.Chat.ID, word)
 	msg.ParseMode = "Markdown"
-	s.Bot.Send(msg)
-	s.logger.Info(fmt.Sprintf("message %+v sent successfully", msg))
+	_, err = s.Bot.Send(msg)
+	if err != nil {
+		s.logger.Error("message not sent, error: " + err.Error())
+	} else {
+		s.logger.Info(fmt.Sprintf("message %+v sent successfully", msg))
+	}
 }
