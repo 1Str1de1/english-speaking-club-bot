@@ -28,7 +28,7 @@ func NewServer(conf *config.Config) *Server {
 		panic("error starting cron " + err.Error())
 	}
 
-	tb, err := services.NewTgService(conf.Token, conf.YandApiKey)
+	tb, err := services.NewTgService(conf.Token, conf.YandApiKey, logger)
 	if err != nil {
 		panic("error starting tg service" + err.Error())
 	}

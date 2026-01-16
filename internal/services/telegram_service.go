@@ -2,15 +2,18 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	tb "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"log/slog"
 )
 
 type TelegramService struct {
 	Bot        *tb.BotAPI
 	yandApiKey string
+	logger     *slog.Logger
 }
 
-func NewTgService(token, yandApiKey string) (*TelegramService, error) {
+func NewTgService(token, yandApiKey string, logger *slog.Logger) (*TelegramService, error) {
 	bot, err := tb.NewBotAPI(token)
 	if err != nil {
 		return nil, err
@@ -29,6 +32,7 @@ func NewTgService(token, yandApiKey string) (*TelegramService, error) {
 	return &TelegramService{
 		Bot:        bot,
 		yandApiKey: yandApiKey,
+		logger:     logger,
 	}, nil
 }
 
@@ -71,8 +75,11 @@ func (s *TelegramService) HandleCommand(update *tb.Update) {
 }
 
 func (s *TelegramService) handleRandomWord(update *tb.Update) {
+	s.logger.Info("handling randomword update...")
+
 	word, err := ExecuteRandomWordCommand(s.yandApiKey)
 	if err != nil {
+		s.logger.Error(fmt.Sprintf("error executing randomword commmand: " + err.Error()))
 		msg := tb.NewMessage(update.Message.Chat.ID,
 			"❌ Не могу получить случайное слово")
 		s.Bot.Send(msg)
@@ -82,4 +89,5 @@ func (s *TelegramService) handleRandomWord(update *tb.Update) {
 	msg := tb.NewMessage(update.Message.Chat.ID, word)
 	msg.ParseMode = "Markdown"
 	s.Bot.Send(msg)
+	s.logger.Info(fmt.Sprintf("message %+v sent successfully", msg))
 }
