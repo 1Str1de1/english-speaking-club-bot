@@ -126,7 +126,7 @@ func FormatWordForTelegram(data *YandexDictResponse) string {
 	var builder strings.Builder
 
 	word := data.Definition[0]
-	builder.WriteString(fmt.Sprintf("📚 *%s", word.Word))
+	builder.WriteString(fmt.Sprintf("📚 %s", word.Word))
 
 	if word.PartOfSpeech != "" {
 		builder.WriteString(fmt.Sprintf("\n🔤 %s", word.PartOfSpeech))

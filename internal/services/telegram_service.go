@@ -86,6 +86,8 @@ func (s *TelegramService) handleRandomWord(update *tb.Update) {
 		return
 	}
 
+	s.logger.Info(fmt.Sprintf("formatted word is: %s", word))
+
 	msg := tb.NewMessage(update.Message.Chat.ID, word)
 	msg.ParseMode = "Markdown"
 	_, err = s.Bot.Send(msg)
