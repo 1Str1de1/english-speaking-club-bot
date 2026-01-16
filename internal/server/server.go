@@ -3,11 +3,11 @@ package server
 import (
 	"english-speaking-club-bot/internal/config"
 	"english-speaking-club-bot/internal/services"
+	"fmt"
 	"github.com/go-co-op/gocron/v2"
 	"log/slog"
 	"net/http"
 	"os"
-	"path/filepath"
 )
 
 type Server struct {
@@ -42,18 +42,18 @@ func NewServer(conf *config.Config) *Server {
 }
 
 func setupLogger() (*slog.Logger, error) {
-	projDir, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
-	logFile := filepath.Join(projDir, "logs", "logs.log")
-
-	file, err := os.OpenFile(
-		logFile,
-		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
-		0666)
-	logger := slog.New(slog.NewJSONHandler(file, &slog.HandlerOptions{
+	//projDir, err := os.Getwd()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//logFile := filepath.Join(projDir, "logs", "logs.log")
+	//
+	//file, err := os.OpenFile(
+	//	logFile,
+	//	os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+	//	0666)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))
 
@@ -68,10 +68,14 @@ func (s *Server) Start() error {
 	s.logger.Info("starting server...")
 
 	http.HandleFunc("/tg/webhook", func(w http.ResponseWriter, r *http.Request) {
+		s.logger.Info("webhook received")
+
 		update, err := s.tb.Bot.HandleUpdate(r)
 		if err != nil {
 			s.logger.Error("update error: " + err.Error())
 		}
+
+		s.logger.Info(fmt.Sprintf("update: %+v\n", update))
 		s.tb.HandleCommand(update)
 	})
 
