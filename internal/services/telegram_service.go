@@ -5,6 +5,7 @@ import (
 	"fmt"
 	tb "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log/slog"
+	"math/rand"
 )
 
 type TelegramService struct {
@@ -37,16 +38,31 @@ func NewTgService(token, yandApiKey string, logger *slog.Logger) (*TelegramServi
 }
 
 func (s *TelegramService) SendHowAreYouPoll(chatId int64) error {
+	questions := []string{
+		"What made you smile today, and why?",
+		"If you could change one small thing about your daily routine, what would it be?",
+		"What’s something you’ve learned recently that surprised you?",
+		"What’s a song, video, or quote that’s been on your mind lately? What do you think it means?",
+		"What’s one decision you made recently? How do you feel about it now?",
+		"What food do you like, and how often do you eat it?",
+		"What is one place you want to visit, and why?",
+		"What did you do last weekend? Tell us 2–3 things.",
+		"What kind of music do you like, and when do you listen to it?",
+		"What do you usually do after work or school?",
+	}
+
+	num := rand.Intn(10)
+
 	poll := tb.SendPollConfig{
 		BaseChat: tb.BaseChat{
 			ChatID: chatId,
 		},
 
-		Question: "How are you today?",
+		Question: questions[num],
 		Options: []string{
-			"😄 Great",
-			"🙂 OK",
-			"😕 Not great",
+			"I answered",
+			"I'm gay",
+			"Some love for developer",
 		},
 
 		IsAnonymous:           false,
