@@ -33,6 +33,20 @@ func main() {
 		log.Fatal("error starting server" + err.Error())
 	}
 
+	//voc, err := services.LoadVocabulary("common_words.txt")
+	//if err != nil {
+	//	log.Fatal("error loading vocabulary" + err.Error())
+	//}
+	//
+	//w1 := services.GetRandomWordFromVocabulary(voc)
+	//
+	//word, err := services.FetchWordWithTranslation(os.Getenv("YANDEX_DICT_API_KEY"), w1)
+	//if err != nil {
+	//	fmt.Println("error getting word")
+	//} else {
+	//	fmt.Println(word)
+	//}
+
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
 		os.Interrupt,

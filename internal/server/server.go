@@ -2,17 +2,19 @@ package server
 
 import (
 	"english-speaking-club-bot/internal/config"
+	"english-speaking-club-bot/internal/services"
+	"fmt"
 	"github.com/go-co-op/gocron/v2"
 	"log/slog"
+	"net/http"
 	"os"
-	"path/filepath"
 )
 
 type Server struct {
 	conf   *config.Config
 	logger *slog.Logger
 	cron   gocron.Scheduler
-	tb     *TelegramService
+	tb     *services.TelegramService
 }
 
 func NewServer(conf *config.Config) *Server {
@@ -26,7 +28,7 @@ func NewServer(conf *config.Config) *Server {
 		panic("error starting cron " + err.Error())
 	}
 
-	tb, err := NewTgService(conf.Token)
+	tb, err := services.NewTgService(conf.Token, conf.YandApiKey, logger)
 	if err != nil {
 		panic("error starting tg service" + err.Error())
 	}
@@ -40,18 +42,18 @@ func NewServer(conf *config.Config) *Server {
 }
 
 func setupLogger() (*slog.Logger, error) {
-	projDir, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
-	logFile := filepath.Join(projDir, "logs", "logs.log")
-
-	file, err := os.OpenFile(
-		logFile,
-		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
-		0666)
-	logger := slog.New(slog.NewJSONHandler(file, &slog.HandlerOptions{
+	//projDir, err := os.Getwd()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//logFile := filepath.Join(projDir, "logs", "logs.log")
+	//
+	//file, err := os.OpenFile(
+	//	logFile,
+	//	os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+	//	0666)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))
 
@@ -65,6 +67,18 @@ func setupLogger() (*slog.Logger, error) {
 func (s *Server) Start() error {
 	s.logger.Info("starting server...")
 
+	http.HandleFunc("/tg/webhook", func(w http.ResponseWriter, r *http.Request) {
+		s.logger.Info("webhook received")
+
+		update, err := s.tb.Bot.HandleUpdate(r)
+		if err != nil {
+			s.logger.Error("update error: " + err.Error())
+		}
+
+		s.logger.Info(fmt.Sprintf("update: %+v\n", update))
+		s.tb.HandleCommand(update)
+	})
+
 	_, err := s.cron.NewJob(
 		gocron.CronJob("0 18 * * *", false),
 		gocron.NewTask(func() {
@@ -72,6 +86,7 @@ func (s *Server) Start() error {
 			if err != nil {
 				s.logger.Error("cron or poll error", "err", err)
 			}
+			s.logger.Info("successfully sent a poll")
 		}))
 
 	if err != nil {
@@ -81,7 +96,7 @@ func (s *Server) Start() error {
 	s.cron.Start()
 
 	s.logger.Info("server started successfully")
-	return nil
+	return http.ListenAndServe(":"+s.conf.Port, nil)
 }
 
 func (s *Server) Stop() error {

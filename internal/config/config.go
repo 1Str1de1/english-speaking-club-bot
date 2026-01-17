@@ -10,15 +10,23 @@ type Config struct {
 	Token        string
 	ChatId       int64
 	ThreadPoolId int
+	YandApiKey   string
+	Port         string
 }
 
 func NewConfig() (*Config, error) {
 	token := os.Getenv("BOT_TOKEN")
 	chatIdStr := os.Getenv("CHAT_ID")
 	threadPoolIdStr := os.Getenv("MESSAGE_THREAD_ID")
+	yandApiKey := os.Getenv("YANDEX_DICT_API_KEY")
+	port := os.Getenv("PORT")
 
 	if len(token) == 0 {
 		return nil, errors.New("error getting bot_token")
+	}
+
+	if len(yandApiKey) == 0 {
+		return nil, errors.New("error getting yandex_dict_api_key")
 	}
 
 	chatId, err := strconv.ParseInt(chatIdStr, 10, 64)
@@ -28,12 +36,14 @@ func NewConfig() (*Config, error) {
 
 	threadPoolId, err := strconv.Atoi(threadPoolIdStr)
 	if chatId == 0 || err != nil {
-		return nil, errors.New("error getting thread_pool_id")
+		return nil, errors.New(" error getting thread_pool_id: " + err.Error())
 	}
 
 	return &Config{
 		Token:        token,
 		ChatId:       chatId,
 		ThreadPoolId: threadPoolId,
+		YandApiKey:   yandApiKey,
+		Port:         port,
 	}, nil
 }
