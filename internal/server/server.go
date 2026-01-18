@@ -76,6 +76,8 @@ func (s *Server) Start() error {
 		}
 
 		s.logger.Info(fmt.Sprintf("update: %+v\n", update))
+
+		s.tb.HandleCallback(update)
 		s.tb.HandleCommand(update)
 	})
 
