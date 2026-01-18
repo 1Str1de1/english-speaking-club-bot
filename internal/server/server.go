@@ -35,7 +35,10 @@ func NewServer(conf *config.Config) *Server {
 		conf.PostgresConf.Host,
 		conf.PostgresConf.Port,
 		conf.PostgresConf.DbName,
+		logger,
 	)
+
+	logger.Info("postgres started on URL: ")
 
 	tb, err := services.NewTgService(conf.Token, conf.YandApiKey, conf.WHAddr, logger, scheduleDb)
 	if err != nil {

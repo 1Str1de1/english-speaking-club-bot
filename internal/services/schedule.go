@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/jackc/pgx/v5"
+	"log/slog"
 )
 
 type ScheduleStore struct {
 	db *sql.DB
 }
 
-func NewScheduleStore(username, password, host, port, dbname string) (*ScheduleStore, error) {
+func NewScheduleStore(username, password, host, port, dbname string, logger *slog.Logger) (*ScheduleStore, error) {
 	conn := fmt.Sprintf("postgres://postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		username, password, host, port, dbname,
 	)
@@ -22,6 +23,8 @@ func NewScheduleStore(username, password, host, port, dbname string) (*ScheduleS
 	if err = db.Ping(); err != nil {
 		return nil, err
 	}
+
+	logger.Info("postgres successfully started on URL: ", conn)
 
 	return &ScheduleStore{db: db}, nil
 }
