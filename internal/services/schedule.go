@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	_ "github.com/jackc/pgx/v5"
 	"log/slog"
@@ -29,13 +30,13 @@ func NewScheduleStore(username, password, host, port, dbname string, logger *slo
 	return &ScheduleStore{db: db}, nil
 }
 
-func FormatScheduleForTelegram(db *ScheduleStore) string {
+func FormatScheduleForTelegram(db *ScheduleStore) (string, error) {
 	lastText, err := getScheduleText(db)
 	if err != nil {
-		return fmt.Sprintf("error getting last update %v", err)
+		return "", errors.New("error getting last update" + err.Error())
 	}
 	text := "📅 Расписание занятий:\n\n" + lastText
-	return text
+	return text, nil
 }
 
 func getScheduleText(db *ScheduleStore) (string, error) {

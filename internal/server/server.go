@@ -38,8 +38,6 @@ func NewServer(conf *config.Config) *Server {
 		logger,
 	)
 
-	logger.Info("postgres started on URL: ")
-
 	tb, err := services.NewTgService(conf.Token, conf.YandApiKey, conf.WHAddr, logger, scheduleDb)
 	if err != nil {
 		panic("error starting tg service" + err.Error())

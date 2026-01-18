@@ -160,7 +160,10 @@ func (s *TelegramService) handleRandomWord(update *tb.Update) {
 func (s *TelegramService) handleSchedule(update *tb.Update) {
 	s.logger.Info("handling schedule command...")
 
-	text := FormatScheduleForTelegram(s.db)
+	text, err := FormatScheduleForTelegram(s.db)
+	if err != nil {
+		s.logger.Error("error formatting schedule: ", "err", err)
+	}
 
 	btn := tb.NewInlineKeyboardButtonData("✏️ Изменить расписание", "edit_schedule")
 	keyboard := tb.NewInlineKeyboardMarkup(
