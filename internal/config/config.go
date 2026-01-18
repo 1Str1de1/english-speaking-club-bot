@@ -13,6 +13,15 @@ type Config struct {
 	YandApiKey   string
 	Port         string
 	WHAddr       string
+	PostgresConf PostgresConf
+}
+
+type PostgresConf struct {
+	Username string
+	Password string
+	Host     string
+	Port     string
+	DbName   string
 }
 
 func NewConfig() (*Config, error) {
@@ -22,7 +31,19 @@ func NewConfig() (*Config, error) {
 	yandApiKey := os.Getenv("YANDEX_DICT_API_KEY")
 	port := os.Getenv("PORT")
 	whAddr := os.Getenv("WEBHOOK_ADDRESS")
+	pgUsername := os.Getenv("PGUSER")
+	pgPassword := os.Getenv("PGPASSWORD")
+	pgHost := os.Getenv("PGHOST")
+	pgPort := os.Getenv("PGPORT")
+	pgDb := os.Getenv("PGDATABASE")
 
+	pgConf := PostgresConf{
+		Username: pgUsername,
+		Password: pgPassword,
+		Host:     pgHost,
+		Port:     pgPort,
+		DbName:   pgDb,
+	}
 	if len(token) == 0 {
 		return nil, errors.New("error getting bot_token")
 	}
@@ -52,5 +73,6 @@ func NewConfig() (*Config, error) {
 		YandApiKey:   yandApiKey,
 		Port:         port,
 		WHAddr:       whAddr,
+		PostgresConf: pgConf,
 	}, nil
 }

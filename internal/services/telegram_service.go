@@ -9,13 +9,14 @@ import (
 )
 
 type TelegramService struct {
-	Bot        *tb.BotAPI
-	yandApiKey string
-	WHAddr     string
-	logger     *slog.Logger
+	Bot                *tb.BotAPI
+	yandApiKey         string
+	logger             *slog.Logger
+	db                 *ScheduleStore
+	waitingForSchedule map[int64]bool
 }
 
-func NewTgService(token, yandApiKey, WHAddr string, logger *slog.Logger) (*TelegramService, error) {
+func NewTgService(token, yandApiKey, WHAddr string, logger *slog.Logger, db *ScheduleStore) (*TelegramService, error) {
 	bot, err := tb.NewBotAPI(token)
 	if err != nil {
 		return nil, err
@@ -33,9 +34,11 @@ func NewTgService(token, yandApiKey, WHAddr string, logger *slog.Logger) (*Teleg
 	}
 
 	return &TelegramService{
-		Bot:        bot,
-		yandApiKey: yandApiKey,
-		logger:     logger,
+		Bot:                bot,
+		yandApiKey:         yandApiKey,
+		logger:             logger,
+		db:                 db,
+		waitingForSchedule: make(map[int64]bool),
 	}, nil
 }
 
@@ -110,6 +113,26 @@ func (s *TelegramService) HandleCallback(update *tb.Update) {
 	}
 }
 
+func (s *TelegramService) HandleMessage(update *tb.Update) {
+	if update.Message == nil || update.Message.IsCommand() {
+		return
+	}
+
+	chatID := update.Message.Chat.ID
+
+	if s.waitingForSchedule[chatID] {
+		s.logger.Info("schedule update received", "chat", chatID)
+
+		SaveSchedule(s.db, update.Message.Text)
+
+		s.waitingForSchedule[chatID] = false
+
+		msg := tb.NewMessage(chatID, "✅ Расписание обновлено!")
+		s.Bot.Send(msg)
+	}
+
+}
+
 func (s *TelegramService) handleRandomWord(update *tb.Update) {
 	s.logger.Info("handling randomword update...")
 
@@ -137,7 +160,7 @@ func (s *TelegramService) handleRandomWord(update *tb.Update) {
 func (s *TelegramService) handleSchedule(update *tb.Update) {
 	s.logger.Info("handling schedule command...")
 
-	text := FormatScheduleForTelegram()
+	text := FormatScheduleForTelegram(s.db)
 
 	btn := tb.NewInlineKeyboardButtonData("✏️ Изменить расписание", "edit_schedule")
 	keyboard := tb.NewInlineKeyboardMarkup(
