@@ -12,6 +12,7 @@ type Config struct {
 	ThreadPoolId int
 	YandApiKey   string
 	Port         string
+	WHAddr       string
 }
 
 func NewConfig() (*Config, error) {
@@ -20,6 +21,7 @@ func NewConfig() (*Config, error) {
 	threadPoolIdStr := os.Getenv("MESSAGE_THREAD_ID")
 	yandApiKey := os.Getenv("YANDEX_DICT_API_KEY")
 	port := os.Getenv("PORT")
+	whAddr := os.Getenv("WEBHOOK_ADDRESS")
 
 	if len(token) == 0 {
 		return nil, errors.New("error getting bot_token")
@@ -27,6 +29,10 @@ func NewConfig() (*Config, error) {
 
 	if len(yandApiKey) == 0 {
 		return nil, errors.New("error getting yandex_dict_api_key")
+	}
+
+	if len(whAddr) == 0 {
+		return nil, errors.New("error getting webhook_address")
 	}
 
 	chatId, err := strconv.ParseInt(chatIdStr, 10, 64)

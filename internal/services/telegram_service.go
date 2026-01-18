@@ -11,16 +11,17 @@ import (
 type TelegramService struct {
 	Bot        *tb.BotAPI
 	yandApiKey string
+	WHAddr     string
 	logger     *slog.Logger
 }
 
-func NewTgService(token, yandApiKey string, logger *slog.Logger) (*TelegramService, error) {
+func NewTgService(token, yandApiKey, WHAddr string, logger *slog.Logger) (*TelegramService, error) {
 	bot, err := tb.NewBotAPI(token)
 	if err != nil {
 		return nil, err
 	}
 
-	wh, err := tb.NewWebhook("https://poetic-warmth-production-7bfc.up.railway.app/tg/webhook")
+	wh, err := tb.NewWebhook(fmt.Sprintf("https://%s/tg/webhook", WHAddr))
 	if err != nil {
 		return nil, errors.New("error setting webhook " + err.Error())
 	}
