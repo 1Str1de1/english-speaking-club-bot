@@ -13,11 +13,11 @@ type ScheduleStore struct {
 }
 
 func NewScheduleStore(username, password, host, port, dbname string, logger *slog.Logger) (*ScheduleStore, error) {
-	conn := fmt.Sprintf("postgres://postgres://%s:%s@%s:%s/%s?sslmode=disable",
+	conn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		username, password, host, port, dbname,
 	)
 
-	db, err := sql.Open("postgres", conn)
+	db, err := sql.Open("pgx", conn)
 	if err != nil {
 		logger.Error("error opening postgres ", err.Error(), conn)
 		return nil, err
