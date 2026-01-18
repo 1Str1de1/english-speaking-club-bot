@@ -22,6 +22,7 @@ func NewTgService(token, yandApiKey, WHAddr string, logger *slog.Logger) (*Teleg
 	}
 
 	wh, err := tb.NewWebhook(fmt.Sprintf("https://%s/tg/webhook", WHAddr))
+	logger.Info(fmt.Sprintf("webhook address = %s", wh.URL))
 	if err != nil {
 		return nil, errors.New("error setting webhook " + err.Error())
 	}

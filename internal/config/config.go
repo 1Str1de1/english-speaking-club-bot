@@ -51,5 +51,6 @@ func NewConfig() (*Config, error) {
 		ThreadPoolId: threadPoolId,
 		YandApiKey:   yandApiKey,
 		Port:         port,
+		WHAddr:       whAddr,
 	}, nil
 }

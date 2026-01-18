@@ -15,7 +15,7 @@ import (
 func main() {
 	if os.Getenv("RAILWAY_ENVIRONMENT") == "" {
 		if err := godotenv.Load(); err != nil {
-			log.Fatal("error loading environment variables" + err.Error())
+			log.Fatal("error loading environment variables " + err.Error())
 			return
 		}
 	}
@@ -23,14 +23,14 @@ func main() {
 
 	conf, err := config.NewConfig()
 	if err != nil {
-		log.Fatal("error loading config" + err.Error())
+		log.Fatal("error loading config " + err.Error())
 		return
 	}
 
 	srv := server.NewServer(conf)
 
 	if err := srv.Start(); err != nil {
-		log.Fatal("error starting server" + err.Error())
+		log.Fatal("error starting server " + err.Error())
 	}
 
 	//voc, err := services.LoadVocabulary("common_words.txt")

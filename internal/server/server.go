@@ -95,7 +95,7 @@ func (s *Server) Start() error {
 
 	s.cron.Start()
 
-	s.logger.Info("server started successfully")
+	s.logger.Info(fmt.Sprintf("server started successfully on port %s", s.conf.Port))
 	return http.ListenAndServe(":"+s.conf.Port, nil)
 }
 
