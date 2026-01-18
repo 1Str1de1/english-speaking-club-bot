@@ -19,9 +19,11 @@ func NewScheduleStore(username, password, host, port, dbname string, logger *slo
 
 	db, err := sql.Open("postgres", conn)
 	if err != nil {
+		logger.Error("error opening postgres ", err.Error(), conn)
 		return nil, err
 	}
 	if err = db.Ping(); err != nil {
+		logger.Error("error pinging postgres ", err.Error(), conn)
 		return nil, err
 	}
 
