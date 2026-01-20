@@ -14,6 +14,7 @@ type Config struct {
 	Port         string
 	WHAddr       string
 	PostgresConf PostgresConf
+	SendPollFlag bool
 }
 
 type PostgresConf struct {
@@ -31,6 +32,7 @@ func NewConfig() (*Config, error) {
 	yandApiKey := os.Getenv("YANDEX_DICT_API_KEY")
 	port := os.Getenv("PORT")
 	whAddr := os.Getenv("WEBHOOK_ADDRESS")
+	sendPollFlagStr := os.Getenv("SEND_POLL")
 	pgUsername := os.Getenv("PGUSER")
 	pgPassword := os.Getenv("PGPASSWORD")
 	pgHost := os.Getenv("PGHOST")
@@ -56,6 +58,11 @@ func NewConfig() (*Config, error) {
 		return nil, errors.New("error getting webhook_address")
 	}
 
+	sendPollFlag, err := strconv.ParseBool(sendPollFlagStr)
+	if err != nil {
+		sendPollFlag = false
+	}
+
 	chatId, err := strconv.ParseInt(chatIdStr, 10, 64)
 	if chatId == 0 || err != nil {
 		return nil, errors.New("error getting chat_id")
@@ -73,6 +80,7 @@ func NewConfig() (*Config, error) {
 		YandApiKey:   yandApiKey,
 		Port:         port,
 		WHAddr:       whAddr,
+		SendPollFlag: sendPollFlag,
 		PostgresConf: pgConf,
 	}, nil
 }
