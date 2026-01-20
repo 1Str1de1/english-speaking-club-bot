@@ -92,18 +92,19 @@ func (s *Server) Start() error {
 		s.tb.HandleMessage(update)
 	})
 
-	_, err := s.cron.NewJob(
-		gocron.CronJob("0 18 * * *", false),
-		gocron.NewTask(func() {
-			err := s.tb.SendHowAreYouPoll(s.conf.ChatId)
-			if err != nil {
-				s.logger.Error("cron or poll error", "err", err)
-			}
-			s.logger.Info("successfully sent a poll")
-		}))
-
-	if err != nil {
-		return err
+	if s.conf.SendPollFlag {
+		_, err := s.cron.NewJob(
+			gocron.CronJob("0 18 * * *", false),
+			gocron.NewTask(func() {
+				err := s.tb.SendHowAreYouPoll(s.conf.ChatId)
+				if err != nil {
+					s.logger.Error("cron or poll error", "err", err)
+				}
+				s.logger.Info("successfully sent a poll")
+			}))
+		if err != nil {
+			return err
+		}
 	}
 
 	s.cron.Start()
