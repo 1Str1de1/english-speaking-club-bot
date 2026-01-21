@@ -21,8 +21,9 @@ type Vocabulary struct {
 
 type YandexDictResponse struct {
 	Definition []struct {
-		Word         string `json:"text"`
-		PartOfSpeech string `json:"pos"`
+		Word          string `json:"text"`
+		PartOfSpeech  string `json:"pos"`
+		Transcription string `json:"ts"`
 
 		Tr []struct {
 			Word         string `json:"text"`
@@ -129,7 +130,11 @@ func FormatWordForTelegram(data *YandexDictResponse) string {
 	builder.WriteString(fmt.Sprintf("📚 %s", word.Word))
 
 	if word.PartOfSpeech != "" {
-		builder.WriteString(fmt.Sprintf("\n🔤 %s", word.PartOfSpeech))
+		builder.WriteString(fmt.Sprintf("\n🔤 %s", translatePartOfSpeech(word.PartOfSpeech)))
+	}
+
+	if word.Transcription != "" {
+		builder.WriteString(fmt.Sprintf("\n👄 [%s]", word.Transcription))
 	}
 
 	builder.WriteString("\n\n")
