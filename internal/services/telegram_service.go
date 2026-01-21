@@ -125,7 +125,10 @@ func (s *TelegramService) HandleMessage(update *tb.Update) {
 	if s.waitingForSchedule[chatID] {
 		s.logger.Info("schedule update received", "chat", chatID)
 
-		SaveSchedule(s.db, update.Message.Text)
+		if err := SaveSchedule(s.db, update.Message.Text); err != nil {
+			s.logger.Error("error saving new schedule: ", "err", err)
+			s.Bot.Send(tb.NewMessage(chatID, "❌ Ошибка при сохранении расписания"))
+		}
 
 		s.waitingForSchedule[chatID] = false
 
