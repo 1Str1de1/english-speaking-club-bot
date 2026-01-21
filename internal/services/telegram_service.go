@@ -128,6 +128,8 @@ func (s *TelegramService) HandleMessage(update *tb.Update) {
 		if err := SaveSchedule(s.db, update.Message.Text); err != nil {
 			s.logger.Error("error saving new schedule: ", "err", err)
 			s.Bot.Send(tb.NewMessage(chatID, "❌ Ошибка при сохранении расписания"))
+			s.waitingForSchedule[chatID] = false
+			return
 		}
 
 		s.waitingForSchedule[chatID] = false
@@ -178,6 +180,7 @@ func (s *TelegramService) handleSchedule(update *tb.Update) {
 	msg := tb.NewMessage(update.Message.Chat.ID, text)
 	msg.ReplyMarkup = keyboard
 	s.Bot.Send(msg)
+	s.waitingForSchedule[update.Message.Chat.ID] = true
 
 }
 
