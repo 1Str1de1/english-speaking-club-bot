@@ -110,6 +110,8 @@ func (s *TelegramService) HandleCallback(update *tb.Update) {
 	switch cb.Data {
 	case "edit_schedule":
 		s.handleEditSchedule(cb)
+	default:
+		s.logger.Info(fmt.Sprintf("callback is: %v", cb.Data))
 	}
 }
 
