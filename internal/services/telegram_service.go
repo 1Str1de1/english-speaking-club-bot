@@ -180,7 +180,6 @@ func (s *TelegramService) handleSchedule(update *tb.Update) {
 	msg := tb.NewMessage(update.Message.Chat.ID, text)
 	msg.ReplyMarkup = keyboard
 	s.Bot.Send(msg)
-	s.waitingForSchedule[update.Message.Chat.ID] = true
 
 }
 
@@ -190,6 +189,8 @@ func (s *TelegramService) handleEditSchedule(cb *tb.CallbackQuery) {
 		cb.Message.MessageID,
 		"✏️ Введите новое расписание одним сообщением:",
 	)
+
+	s.waitingForSchedule[cb.Message.Chat.ID] = true
 
 	if _, err := s.Bot.Send(edit); err != nil {
 		s.logger.Error("error editing message ", "err", err)
