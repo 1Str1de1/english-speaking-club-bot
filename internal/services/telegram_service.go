@@ -188,5 +188,7 @@ func (s *TelegramService) handleEditSchedule(cb *tb.CallbackQuery) {
 	}
 
 	answer := tb.NewCallback(cb.ID, "")
-	s.Bot.Request(answer)
+	if _, err := s.Bot.Request(answer); err != nil {
+		s.logger.Error("error requesting answer: ", "err", err)
+	}
 }

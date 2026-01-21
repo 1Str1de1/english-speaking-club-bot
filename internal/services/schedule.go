@@ -6,6 +6,7 @@ import (
 	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"log/slog"
+	"time"
 )
 
 type ScheduleStore struct {
@@ -55,7 +56,7 @@ func getScheduleText(db *ScheduleStore) (string, error) {
 func SaveSchedule(db *ScheduleStore, text string) error {
 	_, err := db.db.Exec(`
 	INSERT INTO schedule (text, last_update)
-	VALUES ($1, NOW())
-`, text)
+	VALUES ($1, $2)
+`, text, time.Now())
 	return err
 }
