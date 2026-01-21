@@ -186,11 +186,6 @@ func FormatWordForTelegram(data *YandexDictResponse) string {
 		}
 	}
 
-	builder.WriteString(fmt.Sprintf(
-		"🔊 [Аудио произношение](https://dictionary.yandex.net/dicservice?service=pronounce&lang=en&text=%s)",
-		word.Word,
-	))
-
 	return builder.String()
 }
 
