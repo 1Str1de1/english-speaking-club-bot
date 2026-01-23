@@ -110,6 +110,8 @@ func (s *TelegramService) HandleCallback(update *tb.Update) {
 	switch cb.Data {
 	case "edit_schedule":
 		s.handleEditSchedule(cb)
+	case "ok":
+		s.handleOk(cb)
 	default:
 		s.logger.Info(fmt.Sprintf("callback is: %v", cb.Data))
 	}
@@ -172,9 +174,11 @@ func (s *TelegramService) handleSchedule(update *tb.Update) {
 		s.logger.Error("error formatting schedule: ", "err", err)
 	}
 
-	btn := tb.NewInlineKeyboardButtonData("✏️ Изменить расписание", "edit_schedule")
+	btnSch := tb.NewInlineKeyboardButtonData("✏️ Изменить расписание", "edit_schedule")
+	btnOk := tb.NewInlineKeyboardButtonData("✅ OK", "ok")
 	keyboard := tb.NewInlineKeyboardMarkup(
-		tb.NewInlineKeyboardRow(btn),
+		tb.NewInlineKeyboardRow(btnSch),
+		tb.NewInlineKeyboardRow(btnOk),
 	)
 
 	msg := tb.NewMessage(update.Message.Chat.ID, text)
@@ -200,4 +204,25 @@ func (s *TelegramService) handleEditSchedule(cb *tb.CallbackQuery) {
 	if _, err := s.Bot.Request(answer); err != nil {
 		s.logger.Error("error requesting answer: ", "err", err)
 	}
+}
+
+func (s *TelegramService) handleOk(cb *tb.CallbackQuery) {
+
+	text, err := FormatScheduleForTelegram(s.db)
+	if err != nil {
+		s.logger.Error("error formatting schedule: ", "err", err)
+	}
+
+	edit := tb.NewEditMessageText(
+		cb.Message.Chat.ID,
+		cb.Message.MessageID,
+		text,
+	)
+
+	s.waitingForSchedule[cb.Message.Chat.ID] = false
+
+	if _, err := s.Bot.Send(edit); err != nil {
+		s.logger.Error("error editing message ", "err", err)
+	}
+
 }
