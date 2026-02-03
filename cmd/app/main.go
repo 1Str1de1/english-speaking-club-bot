@@ -15,7 +15,7 @@ import (
 func main() {
 	if os.Getenv("RAILWAY_ENVIRONMENT") == "" {
 		if err := godotenv.Load(); err != nil {
-			log.Fatal("error loading environment variables " + err.Error())
+			log.Println("error loading environment variables " + err.Error() + ". using environment variables instead")
 			return
 		}
 	}

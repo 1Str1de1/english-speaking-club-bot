@@ -7,6 +7,7 @@ run:
 
 docker-restart:
 	docker-compose stop
+	docker-compose build --no-cache
 	docker-compose up -d
 
 DEFAULT: build
