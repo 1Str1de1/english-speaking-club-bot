@@ -5,7 +5,7 @@ import (
 	"english-speaking-club-bot/internal/config"
 	"english-speaking-club-bot/internal/server"
 	"fmt"
-	"github.com/joho/godotenv"
+//	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"os/signal"
@@ -14,10 +14,10 @@ import (
 
 func main() {
 	if os.Getenv("RAILWAY_ENVIRONMENT") == "" {
-		if err := godotenv.Load(); err != nil {
-			log.Fatal("error loading environment variables " + err.Error())
+		/*if err := godotenv.Load(); err != nil {
+			log.Println("error loading environment variables " + err.Error() + ". using environment variables instead")
 			return
-		}
+		}*/
 	}
 	fmt.Println("Start")
 
