@@ -6,8 +6,8 @@ run:
 	go run -v ./cmd/app
 
 docker-restart:
-	docker-compose stop
-	docker-compose build --no-cache
-	docker-compose up -d
+	docker compose stop
+	docker compose build --no-cache
+	docker compose up -d
 
 DEFAULT: build

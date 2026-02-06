@@ -30,22 +30,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./.env:/english-speaking-club-bot/.env
     env_file:
       - .env
-    environment:
-      - BOT_TOKEN=${BOT_TOKEN}
-      - CHAT_ID=${CHAT_ID}
-      - YANDEX_DICT_API_KEY=${YANDEX_DICT_API_KEY}
-      - PORT=${PORT}
-      - WEBHOOK_ADDRESS=${WEBHOOK_ADDRESS}
-      - SEND_POLL=${SEND_POLL}
-      - PGDATABASE=${PGDATABASE}
-      - PGHOST=${PGHOST}
-      - PGPASSWORD=${PGPASSWORD}
-      - PGPORT=${PGPORT}
-      - PGUSER=${PGUSER}
     networks:
       - eng-network
 
