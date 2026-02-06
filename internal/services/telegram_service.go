@@ -3,19 +3,21 @@ package services
 import (
 	"errors"
 	"fmt"
-	tb "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log/slog"
 	"math/rand"
+
+	tb "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type TelegramService struct {
-	Bot        *tb.BotAPI
-	yandApiKey string
-	WHAddr     string
-	logger     *slog.Logger
+	Bot                *tb.BotAPI
+	yandApiKey         string
+	logger             *slog.Logger
+	db                 *ScheduleStore
+	waitingForSchedule map[int64]bool
 }
 
-func NewTgService(token, yandApiKey, WHAddr string, logger *slog.Logger) (*TelegramService, error) {
+func NewTgService(token, yandApiKey, WHAddr string, logger *slog.Logger, db *ScheduleStore) (*TelegramService, error) {
 	bot, err := tb.NewBotAPI(token)
 	if err != nil {
 		return nil, err
@@ -33,9 +35,11 @@ func NewTgService(token, yandApiKey, WHAddr string, logger *slog.Logger) (*Teleg
 	}
 
 	return &TelegramService{
-		Bot:        bot,
-		yandApiKey: yandApiKey,
-		logger:     logger,
+		Bot:                bot,
+		yandApiKey:         yandApiKey,
+		logger:             logger,
+		db:                 db,
+		waitingForSchedule: make(map[int64]bool),
 	}, nil
 }
 
@@ -89,7 +93,54 @@ func (s *TelegramService) HandleCommand(update *tb.Update) {
 
 	case "randomword":
 		s.handleRandomWord(update)
+
+	case "schedule":
+		s.handleSchedule(update)
 	}
+
+}
+
+func (s *TelegramService) HandleCallback(update *tb.Update) {
+	if update.CallbackQuery == nil {
+		return
+	}
+
+	cb := update.CallbackQuery
+	s.logger.Info("callback received", "data", cb.Data)
+
+	switch cb.Data {
+	case "edit_schedule":
+		s.handleEditSchedule(cb)
+	case "ok":
+		s.handleOk(cb)
+	default:
+		s.logger.Info(fmt.Sprintf("callback is: %v", cb.Data))
+	}
+}
+
+func (s *TelegramService) HandleMessage(update *tb.Update) {
+	if update.Message == nil || update.Message.IsCommand() {
+		return
+	}
+
+	chatID := update.Message.Chat.ID
+
+	if s.waitingForSchedule[chatID] {
+		s.logger.Info("schedule update received", "chat", chatID)
+
+		if err := SaveSchedule(s.db, update.Message.Text); err != nil {
+			s.logger.Error("error saving new schedule: ", "err", err)
+			s.Bot.Send(tb.NewMessage(chatID, "❌ Ошибка при сохранении расписания"))
+			s.waitingForSchedule[chatID] = false
+			return
+		}
+
+		s.waitingForSchedule[chatID] = false
+
+		msg := tb.NewMessage(chatID, "✅ Расписание обновлено!")
+		s.Bot.Send(msg)
+	}
+
 }
 
 func (s *TelegramService) handleRandomWord(update *tb.Update) {
@@ -97,7 +148,7 @@ func (s *TelegramService) handleRandomWord(update *tb.Update) {
 
 	word, err := ExecuteRandomWordCommand(s.yandApiKey)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("error executing randomword commmand: " + err.Error()))
+		s.logger.Error(fmt.Sprintf("error executing randomword command: " + err.Error()))
 		msg := tb.NewMessage(update.Message.Chat.ID,
 			"❌ Не могу получить случайное слово")
 		s.Bot.Send(msg)
@@ -114,4 +165,65 @@ func (s *TelegramService) handleRandomWord(update *tb.Update) {
 	} else {
 		s.logger.Info(fmt.Sprintf("message %+v sent successfully", msg))
 	}
+}
+
+func (s *TelegramService) handleSchedule(update *tb.Update) {
+	s.logger.Info("handling schedule command...")
+
+	text, err := FormatScheduleForTelegram(s.db)
+	if err != nil {
+		s.logger.Error("error formatting schedule: ", "err", err)
+	}
+
+	btnSch := tb.NewInlineKeyboardButtonData("✏️ Изменить расписание", "edit_schedule")
+	btnOk := tb.NewInlineKeyboardButtonData("✅ OK", "ok")
+	keyboard := tb.NewInlineKeyboardMarkup(
+		tb.NewInlineKeyboardRow(btnSch),
+		tb.NewInlineKeyboardRow(btnOk),
+	)
+
+	msg := tb.NewMessage(update.Message.Chat.ID, text)
+	msg.ReplyMarkup = keyboard
+	s.Bot.Send(msg)
+
+}
+
+func (s *TelegramService) handleEditSchedule(cb *tb.CallbackQuery) {
+	edit := tb.NewEditMessageText(
+		cb.Message.Chat.ID,
+		cb.Message.MessageID,
+		"✏️ Введите новое расписание одним сообщением:",
+	)
+
+	s.waitingForSchedule[cb.Message.Chat.ID] = true
+
+	if _, err := s.Bot.Send(edit); err != nil {
+		s.logger.Error("error editing message ", "err", err)
+	}
+
+	answer := tb.NewCallback(cb.ID, "")
+	if _, err := s.Bot.Request(answer); err != nil {
+		s.logger.Error("error requesting answer: ", "err", err)
+	}
+}
+
+func (s *TelegramService) handleOk(cb *tb.CallbackQuery) {
+
+	text, err := FormatScheduleForTelegram(s.db)
+	if err != nil {
+		s.logger.Error("error formatting schedule: ", "err", err)
+	}
+
+	edit := tb.NewEditMessageText(
+		cb.Message.Chat.ID,
+		cb.Message.MessageID,
+		text,
+	)
+
+	s.waitingForSchedule[cb.Message.Chat.ID] = false
+
+	if _, err := s.Bot.Send(edit); err != nil {
+		s.logger.Error("error editing message ", "err", err)
+	}
+
 }

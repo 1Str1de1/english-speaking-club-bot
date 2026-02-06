@@ -28,7 +28,17 @@ func NewServer(conf *config.Config) *Server {
 		panic("error starting cron " + err.Error())
 	}
 
-	tb, err := services.NewTgService(conf.Token, conf.YandApiKey, conf.WHAddr, logger)
+	logger.Info("starting postgres...")
+	scheduleDb, err := services.NewScheduleStore(
+		conf.PostgresConf.Username,
+		conf.PostgresConf.Password,
+		conf.PostgresConf.Host,
+		conf.PostgresConf.Port,
+		conf.PostgresConf.DbName,
+		logger,
+	)
+
+	tb, err := services.NewTgService(conf.Token, conf.YandApiKey, conf.WHAddr, logger, scheduleDb)
 	if err != nil {
 		panic("error starting tg service" + err.Error())
 	}
@@ -76,21 +86,25 @@ func (s *Server) Start() error {
 		}
 
 		s.logger.Info(fmt.Sprintf("update: %+v\n", update))
+
+		s.tb.HandleCallback(update)
 		s.tb.HandleCommand(update)
+		s.tb.HandleMessage(update)
 	})
 
-	_, err := s.cron.NewJob(
-		gocron.CronJob("0 18 * * *", false),
-		gocron.NewTask(func() {
-			err := s.tb.SendHowAreYouPoll(s.conf.ChatId)
-			if err != nil {
-				s.logger.Error("cron or poll error", "err", err)
-			}
-			s.logger.Info("successfully sent a poll")
-		}))
-
-	if err != nil {
-		return err
+	if s.conf.SendPollFlag {
+		_, err := s.cron.NewJob(
+			gocron.CronJob("0 18 * * *", false),
+			gocron.NewTask(func() {
+				err := s.tb.SendHowAreYouPoll(s.conf.ChatId)
+				if err != nil {
+					s.logger.Error("cron or poll error", "err", err)
+				}
+				s.logger.Info("successfully sent a poll")
+			}))
+		if err != nil {
+			return err
+		}
 	}
 
 	s.cron.Start()

@@ -21,8 +21,9 @@ type Vocabulary struct {
 
 type YandexDictResponse struct {
 	Definition []struct {
-		Word         string `json:"text"`
-		PartOfSpeech string `json:"pos"`
+		Word          string `json:"text"`
+		PartOfSpeech  string `json:"pos"`
+		Transcription string `json:"ts"`
 
 		Tr []struct {
 			Word         string `json:"text"`
@@ -84,10 +85,10 @@ func FetchWordWithTranslation(apiKey, word string) (*YandexDictResponse, error) 
 }
 
 func LoadVocabulary(fileName string) (*Vocabulary, error) {
-	projDir, err := os.Getwd()
-	if err != nil {
-		return nil, errors.New("error getting working dir" + err.Error())
-	}
+	projDir := os.Getenv("PROJECT_DIR")
+	//if err != nil {
+	//	return nil, errors.New("error getting working dir")
+	//}
 
 	filePath := filepath.Join(projDir, "internal", "services", fileName)
 	file, err := os.Open(filePath)
@@ -129,7 +130,11 @@ func FormatWordForTelegram(data *YandexDictResponse) string {
 	builder.WriteString(fmt.Sprintf("📚 %s", word.Word))
 
 	if word.PartOfSpeech != "" {
-		builder.WriteString(fmt.Sprintf("\n🔤 %s", word.PartOfSpeech))
+		builder.WriteString(fmt.Sprintf("\n🔤 %s", translatePartOfSpeech(word.PartOfSpeech)))
+	}
+
+	if word.Transcription != "" {
+		builder.WriteString(fmt.Sprintf("\n👄 [%s]", word.Transcription))
 	}
 
 	builder.WriteString("\n\n")
@@ -185,11 +190,6 @@ func FormatWordForTelegram(data *YandexDictResponse) string {
 			break
 		}
 	}
-
-	builder.WriteString(fmt.Sprintf(
-		"🔊 [Аудио произношение](https://dictionary.yandex.net/dicservice?service=pronounce&lang=en&text=%s)",
-		word.Word,
-	))
 
 	return builder.String()
 }
