@@ -85,10 +85,10 @@ func FetchWordWithTranslation(apiKey, word string) (*YandexDictResponse, error) 
 }
 
 func LoadVocabulary(fileName string) (*Vocabulary, error) {
-	projDir, err := os.Getwd()
-	if err != nil {
-		return nil, errors.New("error getting working dir" + err.Error())
-	}
+	projDir := os.Getenv("PROJECT_DIR")
+	//if err != nil {
+	//	return nil, errors.New("error getting working dir")
+	//}
 
 	filePath := filepath.Join(projDir, "internal", "services", fileName)
 	file, err := os.Open(filePath)

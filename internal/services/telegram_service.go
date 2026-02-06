@@ -3,9 +3,10 @@ package services
 import (
 	"errors"
 	"fmt"
-	tb "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log/slog"
 	"math/rand"
+
+	tb "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type TelegramService struct {
@@ -147,7 +148,7 @@ func (s *TelegramService) handleRandomWord(update *tb.Update) {
 
 	word, err := ExecuteRandomWordCommand(s.yandApiKey)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("error executing randomword commmand: " + err.Error()))
+		s.logger.Error(fmt.Sprintf("error executing randomword command: " + err.Error()))
 		msg := tb.NewMessage(update.Message.Chat.ID,
 			"❌ Не могу получить случайное слово")
 		s.Bot.Send(msg)
