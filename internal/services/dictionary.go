@@ -90,7 +90,7 @@ func LoadVocabulary(fileName string) (*Vocabulary, error) {
 	//	return nil, errors.New("error getting working dir")
 	//}
 
-	filePath := filepath.Join(projDir, "internal", "services", fileName)
+	filePath := filepath.Join(projDir, fileName)
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, errors.New("failed to open file with words" + err.Error())
