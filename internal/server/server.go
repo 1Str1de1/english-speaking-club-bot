@@ -4,10 +4,11 @@ import (
 	"english-speaking-club-bot/internal/config"
 	"english-speaking-club-bot/internal/services"
 	"fmt"
-	"github.com/go-co-op/gocron/v2"
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/go-co-op/gocron/v2"
 )
 
 type Server struct {
@@ -38,6 +39,11 @@ func NewServer(conf *config.Config) *Server {
 		logger,
 	)
 
+	logger.Info("running migrations...")
+	err = services.RunMigrations(scheduleDb)
+	if err != nil {
+		panic("migrations error" + err.Error())
+	}
 	tb, err := services.NewTgService(conf.Token, conf.YandApiKey, conf.WHAddr, logger, scheduleDb)
 	if err != nil {
 		panic("error starting tg service" + err.Error())

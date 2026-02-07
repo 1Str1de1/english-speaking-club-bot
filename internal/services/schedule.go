@@ -4,13 +4,35 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose"
+
 	"log/slog"
 	"time"
 )
 
+// ScheduleStore TODO refactor. I want to make methods instead of funcs and somehow run migrations in server.go
 type ScheduleStore struct {
 	db *sql.DB
+}
+
+func RunMigrations(db *ScheduleStore) error {
+	goose.SetDialect("postgres")
+	goose.SetLogger(log.Default())
+
+	projDir := os.Getenv("PROJECT_DIR")
+	migPath := filepath.Join(projDir, "migrations")
+	log.Println("running migrations...")
+	if err := goose.Up(db.db, migPath); err != nil {
+		log.Println("error running migrations" + err.Error() + "\n")
+		return err
+	}
+
+	return nil
 }
 
 func NewScheduleStore(username, password, host, port, dbname string, logger *slog.Logger) (*ScheduleStore, error) {
