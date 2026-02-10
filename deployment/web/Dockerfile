@@ -14,9 +14,11 @@ FROM alpine
 
 COPY --from=builder /bin/english-speaking-club-bot /bin/english-speaking-club-bot
 
-RUN mkdir /eng-bot
+RUN mkdir -p /eng-bot/migrations
 
 COPY --from=builder /english-speaking-club-bot/internal/services/common_words.txt /eng-bot
+
+COPY --from=builder /english-speaking-club-bot/migrations /eng-bot/migrations
 
 EXPOSE 80
 

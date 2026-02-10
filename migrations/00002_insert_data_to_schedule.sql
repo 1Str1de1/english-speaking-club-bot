@@ -1,6 +1,6 @@
--- goose Up
+-- +goose Up
 INSERT INTO schedule (text)
 VALUES ('A2: tentatively Nth of February \nB2: tentatively Nth of February');
 
--- goose Down
+-- +goose Down
 TRUNCATE TABLE schedule;

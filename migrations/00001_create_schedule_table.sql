@@ -1,9 +1,9 @@
--- goose Up
+-- +goose Up
 CREATE TABLE schedule (
   id SERIAL PRIMARY KEY,
   text TEXT,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- goose Down
+-- +goose Down
 DROP TABLE schedule;
