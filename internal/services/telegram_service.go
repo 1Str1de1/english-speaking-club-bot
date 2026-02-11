@@ -127,6 +127,8 @@ func (s *TelegramService) HandleCallback(update *tb.Update) {
 	}
 }
 
+// HandleMessage is handling for updates, also it includes logic
+// of getting updates
 func (s *TelegramService) HandleMessage(update *tb.Update) {
 	if update.Message == nil || update.Message.IsCommand() {
 		return

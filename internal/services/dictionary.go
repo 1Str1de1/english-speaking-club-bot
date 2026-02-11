@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	url2 "net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -62,7 +63,8 @@ func ExecuteRandomWordCommand(apiKey string) (string, error) {
 // FetchWordWithTranslation A func for getting an exact word from YandexTranslate API.
 // It returns YandexDictResponse struct which next will be converted to Telegram message in another func
 func FetchWordWithTranslation(apiKey, word string) (*YandexDictResponse, error) {
-	url := fmt.Sprintf("https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=%s&lang=en-ru&text=%s", apiKey, word)
+	w := url2.QueryEscape(word)
+	url := fmt.Sprintf("https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=%s&lang=en-ru&text=%s", apiKey, w)
 
 	client := &http.Client{
 		Timeout: 5 * time.Second,
