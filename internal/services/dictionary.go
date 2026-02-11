@@ -63,7 +63,7 @@ func ExecuteRandomWordCommand(apiKey string) (string, error) {
 // FetchWordWithTranslation A func for getting an exact word from YandexTranslate API.
 // It returns YandexDictResponse struct which next will be converted to Telegram message in another func
 func FetchWordWithTranslation(apiKey, word string) (*YandexDictResponse, error) {
-	w := url2.QueryEscape(word)
+	w := url2.PathEscape(word)
 	url := fmt.Sprintf("https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=%s&lang=en-ru&text=%s", apiKey, w)
 
 	client := &http.Client{
