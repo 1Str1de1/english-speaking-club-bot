@@ -10,11 +10,12 @@ import (
 )
 
 type TelegramService struct {
-	Bot                *tb.BotAPI
-	yandApiKey         string
-	logger             *slog.Logger
-	db                 *ScheduleStore
-	waitingForSchedule map[int64]bool
+	Bot                 *tb.BotAPI
+	yandApiKey          string
+	logger              *slog.Logger
+	db                  *ScheduleStore
+	waitingForSchedule  map[int64]bool
+	waitingForTranslate map[int64]bool
 }
 
 func NewTgService(token, yandApiKey, WHAddr string, logger *slog.Logger, db *ScheduleStore) (*TelegramService, error) {
@@ -35,11 +36,12 @@ func NewTgService(token, yandApiKey, WHAddr string, logger *slog.Logger, db *Sch
 	}
 
 	return &TelegramService{
-		Bot:                bot,
-		yandApiKey:         yandApiKey,
-		logger:             logger,
-		db:                 db,
-		waitingForSchedule: make(map[int64]bool),
+		Bot:                 bot,
+		yandApiKey:          yandApiKey,
+		logger:              logger,
+		db:                  db,
+		waitingForSchedule:  make(map[int64]bool),
+		waitingForTranslate: make(map[int64]bool),
 	}, nil
 }
 
@@ -96,6 +98,9 @@ func (s *TelegramService) HandleCommand(update *tb.Update) {
 
 	case "schedule":
 		s.handleSchedule(update)
+
+	case "translate":
+		s.handleTranslate(update)
 	}
 
 }
@@ -113,6 +118,8 @@ func (s *TelegramService) HandleCallback(update *tb.Update) {
 		s.handleEditSchedule(cb)
 	case "ok":
 		s.handleOk(cb)
+	case "decline":
+		s.handleDecline(cb)
 	default:
 		s.logger.Info(fmt.Sprintf("callback is: %v", cb.Data))
 	}
@@ -138,6 +145,22 @@ func (s *TelegramService) HandleMessage(update *tb.Update) {
 		s.waitingForSchedule[chatID] = false
 
 		msg := tb.NewMessage(chatID, "✅ Расписание обновлено!")
+		s.Bot.Send(msg)
+	}
+
+	if s.waitingForTranslate[chatID] {
+		s.logger.Info("translate update received", "chat", chatID)
+		text, err := ExecuteTranslateText(s.yandApiKey, update.Message.Text)
+		if err != nil {
+			s.logger.Error("error getting translation: ", "err", err)
+			s.Bot.Send(tb.NewMessage(chatID, "❌ Error getting translation"))
+			s.waitingForTranslate[chatID] = false
+			return
+		}
+
+		s.waitingForTranslate[chatID] = false
+
+		msg := tb.NewMessage(chatID, text)
 		s.Bot.Send(msg)
 	}
 
@@ -226,4 +249,59 @@ func (s *TelegramService) handleOk(cb *tb.CallbackQuery) {
 		s.logger.Error("error editing message ", "err", err)
 	}
 
+}
+
+func (s *TelegramService) handleTranslate(update *tb.Update) {
+	s.logger.Info("handling translate command...")
+
+	text := "✏️Enter the word you want to translate"
+
+	btnDecl := tb.NewInlineKeyboardButtonData("🤞 Don't translate", "decline")
+	btnTran := tb.NewInlineKeyboardButtonData("🌍 Translate", "translate cb")
+	keyboard := tb.NewInlineKeyboardMarkup(
+		tb.NewInlineKeyboardRow(btnDecl),
+		tb.NewInlineKeyboardRow(btnTran),
+	)
+
+	msg := tb.NewMessage(update.Message.Chat.ID, text)
+	msg.ReplyMarkup = keyboard
+	if _, err := s.Bot.Send(msg); err != nil {
+		s.logger.Error("error sending translate start message " + err.Error())
+	}
+
+}
+
+func (s *TelegramService) handleTranslateCb(cb *tb.CallbackQuery) {
+	edit := tb.NewEditMessageText(
+		cb.Message.Chat.ID,
+		cb.Message.MessageID,
+		"Enter the word or phrase to translate:",
+	)
+
+	s.waitingForTranslate[cb.Message.Chat.ID] = true
+
+	if _, err := s.Bot.Send(edit); err != nil {
+		s.logger.Error("error editing message ", "err", err)
+	}
+
+	answer := tb.NewCallback(cb.ID, "")
+	if _, err := s.Bot.Request(answer); err != nil {
+		s.logger.Error("error requesting answer: ", "err", err)
+	}
+}
+
+func (s *TelegramService) handleDecline(cb *tb.CallbackQuery) {
+	text := "🧦Translation declined"
+
+	edit := tb.NewEditMessageText(
+		cb.Message.Chat.ID,
+		cb.Message.MessageID,
+		text,
+	)
+
+	s.waitingForTranslate[cb.Message.Chat.ID] = false
+
+	if _, err := s.Bot.Send(edit); err != nil {
+		s.logger.Error("error editing message ", "err", err)
+	}
 }
