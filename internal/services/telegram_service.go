@@ -120,6 +120,8 @@ func (s *TelegramService) HandleCallback(update *tb.Update) {
 		s.handleOk(cb)
 	case "decline":
 		s.handleDecline(cb)
+	case "translate cb":
+		s.handleTranslateCb(cb)
 	default:
 		s.logger.Info(fmt.Sprintf("callback is: %v", cb.Data))
 	}
